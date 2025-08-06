@@ -62,20 +62,34 @@ public function index(Request $request )
     ->sum('total_payment');
 
 
-    // Province Distribution
-   $provinceOrders = DB::table('orders')
-    ->join('addresses', 'orders.address_id', '=', 'addresses.id')
-    ->when($request->filled('start_date'), function ($query) use ($request) {
-        $query->whereDate('orders.created_at', '>=', $request->start_date);
-    })
-    ->when($request->filled('end_date'), function ($query) use ($request) {
-        $query->whereDate('orders.created_at', '<=', $request->end_date);
-    })
-    ->select('addresses.province', DB::raw('count(orders.id) as total_orders'))
-    ->groupBy('addresses.province')
+//     // Province Distribution
+//    $provinceOrders = DB::table('orders')
+//     ->join('addresses', 'orders.address_id', '=', 'addresses.id')
+//     ->when($request->filled('start_date'), function ($query) use ($request) {
+//         $query->whereDate('orders.created_at', '>=', $request->start_date);
+//     })
+//     ->when($request->filled('end_date'), function ($query) use ($request) {
+//         $query->whereDate('orders.created_at', '<=', $request->end_date);
+//     })
+//     ->select('addresses.province', DB::raw('count(orders.id) as total_orders'))
+//     ->groupBy('addresses.province')
+//     ->orderByDesc('total_orders')
+//     ->pluck('total_orders', 'province');
+// ===== Province Distribution by SHIPPING destination =====
+$provinceOrders = DB::table('orders as o')
+    ->join('addresses as a', 'o.address_id', '=', 'a.id')
+    ->where('o.status', 'completed')
+    ->when($request->filled('start_date'), fn ($q) =>
+        $q->whereDate('o.created_at', '>=', $request->start_date)
+    )
+    ->when($request->filled('end_date'), fn ($q) =>
+        $q->whereDate('o.created_at', '<=', $request->end_date)
+    )
+    ->select('a.province as province',                  // ⬅️ ganti ke kolom yang ada
+             DB::raw('COUNT(o.id) as total_orders'))
+    ->groupBy('a.province')
     ->orderByDesc('total_orders')
     ->pluck('total_orders', 'province');
-
 
     $topProvinces = $provinceOrders->take(5);
     $othersTotal = $provinceOrders->skip(5)->sum();

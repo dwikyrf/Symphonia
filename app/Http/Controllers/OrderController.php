@@ -23,77 +23,48 @@ class OrderController extends Controller
         $orders = Order::where('user_id', auth()->id())->orderBy('created_at', 'desc')->paginate(10);
         return view('order.index', compact('orders'));
     }
-public function show(Order $order)
-{
-    /* ────────────────── Proteksi akses ────────────────── */
-    if ($order->user_id !== auth()->id()) {
-        return redirect()
-            ->route('order.index')
-            ->with('error', 'Anda tidak dapat mengakses pesanan tersebut.');
+    public function markAsReceived(Order $order)
+    {
+        if ($order->shipping?->status === 'dikirim') {
+            $order->status = 'completed';
+            $order->save();
+        }
+        return back()->with('success','Pesanan ditandai selesai.');
     }
+    public function show(Order $order)
+    {
+        /* ────────────────── Proteksi akses ────────────────── */
+        if ($order->user_id !== auth()->id()) {
+            return redirect()
+                ->route('order.index')
+                ->with('error', 'Anda tidak dapat mengakses pesanan tersebut.');
+        }
 
-    /* ────────────────── Load relasi ────────────────────── */
-    // hindari N+1 ketika di Blade
-    $order->load(['transaction', 'details.product', 'shipping', 'address']);
+        /* ────────────────── Load relasi ────────────────────── */
+        // hindari N+1 ketika di Blade
+        $order->load(['transaction', 'details.product', 'shipping', 'address']);
 
-    /* ────────────────── Pastikan transaksi ada ─────────── */
-    // $order->transaction()->firstOrCreate(
-    //     ['order_id' => $order->id],                 // kriteria pencarian
-    //     [                                           // data default bila belum ada
-    //         'user_id'          => $order->user_id,
-    //         'transaction_id'   => (string) Str::uuid(),
-    //         'order_date'       => now(),
-    //         'total_payment'    => $order->total_price,
-    //         'payment_method'   => 'bank_transfer',
-    //         'payment_stage'    => $order->selected_payment_type ?: 'dp',
-    //         'status'           => PaymentController::initialStatus($order),
-    //         'is_verified_dp'   => false,
-    //         'is_verified_full' => false,
-    //     ]
-    // );
-// if ($order->selected_payment_type && $order->transactions()->doesntExist()) {
-//         $order->transactions()->create([
-//             'user_id'        => $order->user_id,
-//             'transaction_id' => (string) Str::uuid(),
-//             'order_date'     => now(),
-//             'payment_stage'  => $order->selected_payment_type,   // 'dp' OR 'full'
-//             'total_payment'  => 0,                               // akan diisi nanti
-//             'status'         => 'draft',
-//             'is_verified_dp'   => false,
-//             'is_verified_full' => false,
-//         ]);
-//     }
-    /* ────────────────── Kirim ke view ──────────────────── */
-    $transaction = $order->transaction; // dipakai di Blade
+        /* ────────────────── Pastikan transaksi ada ─────────── */
+        // $order->transaction()->firstOrCreate(
+        //     ['order_id' => $order->id],                 // kriteria pencarian
+        //     [                                           // data default bila belum ada
+        //         'user_id'          => $order->user_id,
+        //         'transaction_id'   => (string) Str::uuid(),
+        //         'order_date'       => now(),
+        //         'total_payment'    => $order->total_price,
+        //         'payment_method'   => 'bank_transfer',
+        //         'payment_stage'    => $order->selected_payment_type ?: 'dp',
+        //         'status'           => PaymentController::initialStatus($order),
+        //         'is_verified_dp'   => false,
+        //         'is_verified_full' => false,
+        //     ]
+        // );
 
-    return view('order.show', compact('order', 'transaction'));
-}
-    // public function show(Order $order)
-    // {
-    //     // pastikan relasi di-load (agar tidak N+1 ketika di view)
-    //     $order->load(['transaction','details.product','shipping','address']);
+        /* ────────────────── Kirim ke view ──────────────────── */
+        $transaction = $order->transaction; // dipakai di Blade
 
-    //     // ***buat transaksi kosong kalau belum ada (seperti PaymentController::show)***
-    //     $order->transaction()->firstOrCreate(
-    //     ['order_id' => $order->id], // <-- 1. Kriteria Pencarian: Cari berdasarkan order_id
-    //     [                           // <-- 2. Data untuk dibuat JIKA tidak ditemukan
-    //         'user_id'          => $order->user_id,
-    //         'transaction_id'   => Str::uuid(),
-    //         'order_date'       => now(),
-    //         'total_payment'    => $order->total_price,
-    //         'payment_method'   => 'bank_transfer',
-    //         'payment_stage'    => $order->selected_payment_type ?: 'dp', // contoh
-    //         'status'           => PaymentController::initialStatus($order),
-    //         'is_verified_dp'   => false,
-    //         'is_verified_full' => false,
-    //     ]
-    // );
-
-    //     $transaction = $order->transaction;   // <-- untuk blade
-
-    //     return view('order.show', compact('order','transaction'));
-    // }
-
+        return view('order.show', compact('order', 'transaction'));
+    }
      public function createFromCart()
     {
         $user = Auth::user();
@@ -253,198 +224,127 @@ public function show(Order $order)
 
         return view('order.list', compact('list'));
     }
-    // public function updatePaymentType(Request $request, Order $order)
-    // {
-    //     /* ───────────────────────── VALIDASI ───────────────────────── */
-    //     $rules = [
-    //         'selected_payment_type' => ['required','in:dp,full'],
-    //     ];
-
-    //     // Jika order belum punya alamat + shipping,
-    //     // maka field shipping_details (JSON) WAJIB ada
-    //     if (is_null($order->address_id) || is_null($order->shipping_id)) {
-    //         $rules['shipping_details'] = ['required','json'];
-    //     }
-
-    //     $data = $request->validate($rules);
-
-    //     /* ────────────────────── PROSES SHIPPING (opsional) ───────────────────── */
-    //     if (isset($data['shipping_details'])) {
-    //         $ship = json_decode($data['shipping_details'], true);
-
-    //         // pastikan JSON memuat key minimum yang dibutuhkan
-    //         if (!$ship || !Arr::has($ship, [
-    //             'address_id','courier_name','service_code','shipping_cost'
-    //         ])) {
-    //             return back()->with('error','Data pengiriman tidak valid.');
-    //         }
-
-    //         /** 1. alamat */
-    //         $order->address_id = $ship['address_id'];
-
-    //         /** 2. hitung ulang subtotal barang */
-    //         $price = $order->details
-    //                     ->sum(fn ($d) => $d->quantity * $d->product->price);
-
-    //         /** 3. cari / buat shipping */
-    //         $shipping = Shipping::firstOrCreate(
-    //             [
-    //                 'courier_name'   => $ship['courier_name'],
-    //                 'service_code'   => $ship['service_code'],
-    //                 'shipping_cost'  => $ship['shipping_cost'],
-    //                 'estimated_days' => $ship['etd'] ?? null,
-    //             ],
-    //             ['status' => 'pending']
-    //         );
-
-    //         /** 4. total & remaining balance */
-    //         $total = $price + $shipping->shipping_cost;
-
-    //         // default: user belum bayar apa-apa
-    //         $remaining = $total;
-
-    //         // kalau sudah sempat bayar DP (edge-case ketika user ulangi flow)
-    //         if ($order->payment_status === 'partial') {
-    //             $remaining = (int) round($total * 0.60);   // 60 %
-    //         }
-
-    //         /** 5. simpan ke order (tanpa commit dulu) */
-    //         $order->fill([
-    //             'shipping_id'       => $shipping->id,
-    //             'price'             => $price,
-    //             'total_price'       => $total,
-    //             'remaining_balance' => $remaining,
-    //         ]);
-    //     }
-
-    //     /* ─────────────────── PROSES PAYMENT TYPE ─────────────────── */
-    //     $order->selected_payment_type = $data['selected_payment_type'];
-    //     $order->save();                               // satu commit
-
-    //     return redirect()
-    //         ->route('payment.show', $order)
-    //         ->with('success','Jenis pembayaran & pengiriman berhasil disimpan.');
-    // }
+    
     public function updatePaymentType(Request $request, Order $order)
-{
-    /* -------- 1. Validasi input -------- */
-    $rules = ['selected_payment_type' => ['required', 'in:dp,full']];
-    if (is_null($order->address_id) || is_null($order->shipping_id)) {
-        $rules['shipping_details'] = ['required', 'json'];
-    }
-    $data = $request->validate($rules);
+    {
+        /* -------- 1. Validasi input -------- */
+        $rules = ['selected_payment_type' => ['required', 'in:dp,full']];
+        if (is_null($order->address_id) || is_null($order->shipping_id)) {
+            $rules['shipping_details'] = ['required', 'json'];
+        }
+        $data = $request->validate($rules);
 
-    /* -------- 2. Transaksi database (SATU SAJA) -------- */
-    DB::transaction(function () use ($data, $order) {
+        /* -------- 2. Transaksi database (SATU SAJA) -------- */
+        DB::transaction(function () use ($data, $order) {
 
-        /* (A) -------------- proses shipping (opsional) -------------- */
-        if (isset($data['shipping_details'])) {
-            $ship = json_decode($data['shipping_details'], true);
+            /* (A) -------------- proses shipping (opsional) -------------- */
+            if (isset($data['shipping_details'])) {
+                $ship = json_decode($data['shipping_details'], true);
 
-            // pastikan JSON valid
-            if (!Arr::has($ship, [
-                'address_id', 'courier_name', 'service_code', 'shipping_cost'
-            ])) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
-                    'shipping_details' => 'Data pengiriman tidak valid.',
+                // pastikan JSON valid
+                if (!Arr::has($ship, [
+                    'address_id', 'courier_name', 'service_code', 'shipping_cost'
+                ])) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'shipping_details' => 'Data pengiriman tidak valid.',
+                    ]);
+                }
+
+                // 1. alamat
+                $order->address_id = $ship['address_id'];
+
+                // 2. subtotal barang
+                $price = $order->details
+                            ->sum(fn ($d) => $d->quantity * $d->product->price);
+
+                // 3. shipping
+                $shipping = Shipping::firstOrCreate(
+                    [
+                        'courier_name'   => $ship['courier_name'],
+                        'service_code'   => $ship['service_code'],
+                        'shipping_cost'  => $ship['shipping_cost'],
+                        'estimated_days' => $ship['etd'] ?? null,
+                    ],
+                    ['status' => 'pending']
+                );
+
+                // 4. total & sisa
+                $total = $price + $shipping->shipping_cost;
+                $remaining = $order->payment_status === 'partial'
+                    ? intdiv($total * 60, 100) : $total;
+
+                // 5. isi kolom order
+                $order->fill([
+                    'shipping_id'       => $shipping->id,
+                    'price'             => $price,
+                    'total_price'       => $total,
+                    'remaining_balance' => $remaining,
                 ]);
             }
 
-            // 1. alamat
-            $order->address_id = $ship['address_id'];
+            /* (B) -------------- simpan tipe pembayaran -------------- */
+            $order->selected_payment_type = $data['selected_payment_type'];
+            $order->save();                                     // ← commit perubahan Order
 
-            // 2. subtotal barang
-            $price = $order->details
-                           ->sum(fn ($d) => $d->quantity * $d->product->price);
+            /* (C) -------------- sinkron tabel transactions -------------- */
+            $grandTotal = $order->price + ($order->shipping->shipping_cost ?? 0);
 
-            // 3. shipping
-            $shipping = Shipping::firstOrCreate(
-                [
-                    'courier_name'   => $ship['courier_name'],
-                    'service_code'   => $ship['service_code'],
-                    'shipping_cost'  => $ship['shipping_cost'],
-                    'estimated_days' => $ship['etd'] ?? null,
-                ],
-                ['status' => 'pending']
-            );
+            // helper status awal
+            $initStatus = fn ($stage) => $stage === 'dp' ? 'pending' : 'pending_full';
 
-            // 4. total & sisa
-            $total = $price + $shipping->shipping_cost;
-            $remaining = $order->payment_status === 'partial'
-                ? intdiv($total * 60, 100) : $total;
+            if ($order->selected_payment_type === 'dp') {
+                // buat / update transaksi DP (40 %)
+                $order->transactions()->updateOrCreate(
+                    [
+                        'order_id'      => $order->id,
+                        'payment_stage' => 'dp',
+                    ],
+                    [
+                        'user_id'        => $order->user_id,
+                        'transaction_id' => (string) Str::uuid(),
+                        'order_date'     => now(),
+                        'payment_method' => 'bank_transfer',
+                        'total_payment'  => intdiv($grandTotal * 40, 100),
+                        'status'         => $initStatus('dp'),
+                    ]
+                );
 
-            // 5. isi kolom order
-            $order->fill([
-                'shipping_id'       => $shipping->id,
-                'price'             => $price,
-                'total_price'       => $total,
-                'remaining_balance' => $remaining,
-            ]);
-        }
+                // hapus placeholder FULL
+                $order->transactions()
+                    ->where('payment_stage', 'full')
+                    ->delete();
+            }
 
-        /* (B) -------------- simpan tipe pembayaran -------------- */
-        $order->selected_payment_type = $data['selected_payment_type'];
-        $order->save();                                     // ← commit perubahan Order
+            if ($order->selected_payment_type === 'full') {
+                // hapus placeholder DP
+                $order->transactions()
+                    ->where('payment_stage', 'dp')
+                    ->delete();
 
-        /* (C) -------------- sinkron tabel transactions -------------- */
-        $grandTotal = $order->price + ($order->shipping->shipping_cost ?? 0);
+                // buat / update transaksi FULL (100 %)
+                $order->transactions()->updateOrCreate(
+                    [
+                        'order_id'      => $order->id,
+                        'payment_stage' => 'full',
+                    ],
+                    [
+                        'user_id'        => $order->user_id,
+                        'transaction_id' => (string) Str::uuid(),
+                        'order_date'     => now(),
+                        'payment_method' => 'bank_transfer',
+                        'total_payment'  => $grandTotal,
+                        'status'         => $initStatus('full'),
+                    ]
+                );
+            }
+        });
 
-        // helper status awal
-        $initStatus = fn ($stage) => $stage === 'dp' ? 'pending' : 'pending_full';
-
-        if ($order->selected_payment_type === 'dp') {
-            // buat / update transaksi DP (40 %)
-            $order->transactions()->updateOrCreate(
-                [
-                    'order_id'      => $order->id,
-                    'payment_stage' => 'dp',
-                ],
-                [
-                    'user_id'        => $order->user_id,
-                    'transaction_id' => (string) Str::uuid(),
-                    'order_date'     => now(),
-                    'payment_method' => 'bank_transfer',
-                    'total_payment'  => intdiv($grandTotal * 40, 100),
-                    'status'         => $initStatus('dp'),
-                ]
-            );
-
-            // hapus placeholder FULL
-            $order->transactions()
-                  ->where('payment_stage', 'full')
-                  ->delete();
-        }
-
-        if ($order->selected_payment_type === 'full') {
-            // hapus placeholder DP
-            $order->transactions()
-                  ->where('payment_stage', 'dp')
-                  ->delete();
-
-            // buat / update transaksi FULL (100 %)
-            $order->transactions()->updateOrCreate(
-                [
-                    'order_id'      => $order->id,
-                    'payment_stage' => 'full',
-                ],
-                [
-                    'user_id'        => $order->user_id,
-                    'transaction_id' => (string) Str::uuid(),
-                    'order_date'     => now(),
-                    'payment_method' => 'bank_transfer',
-                    'total_payment'  => $grandTotal,
-                    'status'         => $initStatus('full'),
-                ]
-            );
-        }
-    });
-
-    /* -------- 3. Redirect -------- */
-    return redirect()
-        ->route('payment.show', $order)
-        ->with('success', 'Jenis pembayaran & pengiriman berhasil disimpan.');
-}
-        public function uploadDetails(Request $request, Order $order)
+        /* -------- 3. Redirect -------- */
+        return redirect()
+            ->route('payment.show', $order)
+            ->with('success', 'Jenis pembayaran & pengiriman berhasil disimpan.');
+    }
+    public function uploadDetails(Request $request, Order $order)
     {
         $validated = $request->validate([
             'design'      => 'required|image|max:2048',
@@ -502,7 +402,7 @@ public function show(Order $order)
         $order->total_price = $price + $shipping->shipping_cost;
         $order->save();
     }
-     public function cancel(Order $order)
+    public function cancel(Order $order)
     {
         if ($order->user_id !== auth()->id()) {
             abort(403, 'Unauthorized access.');
@@ -519,7 +419,7 @@ public function show(Order $order)
 
         return redirect()->route('order.show', $order->id)->with('success', 'Order berhasil dibatalkan.');
     }
-        public function uploadCorporateProof(Request $request, Order $order)
+    public function uploadCorporateProof(Request $request, Order $order)
     {
         $request->validate([
             'corporate_proof' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
@@ -547,14 +447,12 @@ public function show(Order $order)
         
     }
 
-    
     public function searchDestination(Request $request, KomerceShippingService $komerce)
     {
         return response()->json(
             $komerce->searchDestination($request->input('keyword'))
         );
     }
-
 
     public function updateShippingDetails(Request $request)
     {
@@ -611,80 +509,7 @@ public function show(Order $order)
         ]);
     }
 
-    // public function uploadDetails(Request $request, Order $order)
-    // {
-    //     $request->validate([
-    //         'design' => 'nullable|image|max:2048',
-    //         'logo' => 'nullable|image|max:2048',
-    //         'description' => 'nullable|string|max:5000',
-    //     ]);
-
-    //     if ($request->hasFile('design')) {
-    //         $designPath = $request->file('design')->store('designs', 'public');
-    //         $order->design = $designPath;
-    //     }
-
-    //     if ($request->hasFile('logo')) {
-    //         $logoPath = $request->file('logo')->store('logos', 'public');
-    //         $order->logo = $logoPath;
-    //     }
-
-    //     $order->description = $request->input('description');
-    //     $order->save();
-
-    //     return back()->with('success', 'Detail desain berhasil disimpan.');
-    // }
-// public function updatePaymentType(Request $request, Order $order)
-// {
-//     /* 1. VALIDASI (tetap) */
-//     $rules = ['selected_payment_type' => ['required','in:dp,full']];
-//     if (is_null($order->address_id) || is_null($order->shipping_id)) {
-//         $rules['shipping_details'] = ['required','json'];
-//     }
-//     $data = $request->validate($rules);
-
-//     DB::transaction(function () use ($data, $order) {
-//         /* (A) SHIPPING – sama persis dengan kode Anda … */
-
-//         /* (B) SET payment_type */
-//         $order->selected_payment_type = $data['selected_payment_type'];
-//         $order->save();
-
-//         /* (C) SINKRONKAN TRANSAKSI SESUAI PILIHAN */
-
-//         $grandTotal = $order->price + ($order->shipping->shipping_cost ?? 0);
-
-//         if ($order->selected_payment_type === 'dp') {
-//             $dpAmount = intdiv($grandTotal * 40, 100);
-
-//             // buat / update baris DP
-//             $order->transactions()->updateOrCreate(
-//                 ['payment_stage' => 'dp'],
-//                 ['total_payment' => $dpAmount, 'status' => 'draft']
-//             );
-
-//             // hapus placeholder full (jika ada salah bikin sebelumnya)
-//             $order->transactions()->where('payment_stage','full')->delete();
-//         }
-
-//         if ($order->selected_payment_type === 'full') {
-//             // hapus placeholder DP (jika sempat tercipta)
-//             $order->transactions()->where('payment_stage','dp')->delete();
-
-//             // buat / update baris FULL = grand total
-//             $order->transactions()->updateOrCreate(
-//                 ['payment_stage' => 'full'],
-//                 ['total_payment' => $grandTotal, 'status' => 'draft']
-//             );
-//         }
-//     });
-
-//     return redirect()
-//         ->route('payment.show', $order)
-//         ->with('success', 'Jenis pembayaran & pengiriman berhasil disimpan.');
-// }
-
- public function showFile(Order $order, string $type)
+    public function showFile(Order $order, string $type)
     {
         $user = auth()->user();
 

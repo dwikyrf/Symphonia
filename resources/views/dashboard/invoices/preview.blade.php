@@ -18,6 +18,7 @@
                         <thead class="text-xs uppercase bg-gray-50">
                             <tr>
                                 <th class="px-4 py-2">Product</th>
+                                <th class="px-4 py-2">Size</th>
                                 <th class="px-4 py-2">Quantity</th>
                                 <th class="px-4 py-2">Subtotal</th>
                             </tr>
@@ -26,6 +27,7 @@
                             @foreach ($order->details as $detail)
                                 <tr>
                                     <td class="px-4 py-2">{{ $detail->product->name }}</td>
+                                    <td class="px-4 py-2">{{ $detail->size }}</td>
                                     <td class="px-4 py-2">{{ $detail->quantity }}</td>
                                     <td class="px-4 py-2"> Rp {{ number_format($detail->quantity * $detail->product->price, 0, ',', '.') }}</td>
                                 </tr>
@@ -35,10 +37,30 @@
                 </div>
 
                 <div class="mt-6 flex justify-end">
-                    <p class="text-lg font-bold text-gray-900">
-                        Total: Rp {{ number_format($order->total_price, 0, ',', '.') }}
-                    </p>
+    <!-- Ringkasan biaya (kanan) -->
+                    <div class="text-right space-y-1">
+                        <p class="text-sm font-medium text-gray-700">
+                            Subtotal:
+                            <span class="font-semibold text-gray-900">
+                                Rp {{ number_format($order->price, 0, ',', '.') }}
+                            </span>
+                        </p>
+
+                        <p class="text-sm font-medium text-gray-700">
+                            Ongkir:
+                            <span class="font-semibold text-gray-900">
+                                Rp {{ number_format($order->shipping->shipping_cost ?? 0, 0, ',', '.') }}
+                            </span>
+                        </p>
+
+                        <!-- Garis tipis + total -->
+                        <p class="border-t border-gray-200 pt-1 text-lg font-extrabold text-gray-900">
+                            Total:
+                            Rp {{ number_format($order->total_price, 0, ',', '.') }}
+                        </p>
+                    </div>
                 </div>
+
             </div>
         </div>
     </section>

@@ -63,14 +63,14 @@
                     @php
                         $badgeClass = [
                             'pending'   => 'bg-yellow-100 text-yellow-800',
-                            'shipped'   => 'bg-blue-100 text-blue-800',
-                            'delivered' => 'bg-green-100 text-green-800',
+                            'dikirim'   => 'bg-blue-100 text-blue-800',
+                            'diterima' => 'bg-green-100 text-green-800',
                         ][$order->shipping->status] ?? 'bg-gray-100 text-gray-800';
 
                         $label = [
                             'pending'   => 'Belum Dikirim',
-                            'shipped'   => 'Sedang Dikirim',
-                            'delivered' => 'Telah Diterima',
+                            'dikirim'   => 'Sedang Dikirim',
+                            'diterima' => 'Telah Diterima',
                         ][$order->shipping->status] ?? 'Status Tidak Diketahui';
                     @endphp
                     <span class="inline-block mt-2 px-3 py-1 text-sm font-medium rounded-full {{ $badgeClass }}">
@@ -120,16 +120,23 @@
                                 {{-- Address dropdown --}}
                                 <div class="mb-4">
                                     <label for="address-select" class="block text-sm font-medium text-gray-700 mb-1">Pilih Alamat Pengiriman</label>
-                                    <select id="address-select" class="w-full border border-gray-300 rounded-md p-2 focus:ring-primary-500 focus:border-primary-500">
+                                    <select id="address-select" name="address_id"class="w-full border border-gray-300 rounded-md p-2 focus:ring-primary-500">
                                         <option value="">-- Pilih Alamat --</option>
-                                        @foreach (auth()->user()->addresses as $addr)
+                                        @foreach(auth()->user()->addresses as $addr)
                                             <option
                                                 value="{{ $addr->id }}"
-                                                data-postal="{{ $addr->postal_code }}"
-                                                data-recipient="{{ $addr->recipient_name }}"
-                                                data-city="{{ $addr->city }}"
-                                                {{ $order->address_id === $addr->id ? 'selected' : '' }}>
-                                                {{ $addr->recipient_name }} - {{ $addr->address }} ({{ $addr->postal_code }})
+                                                data-postal     ="{{ $addr->postal_code }}"
+                                                data-recipient  ="{{ $addr->recipient_name }}"
+                                                data-city       ="{{ $addr->city }}"
+                                                @selected(
+                                                    // ① jika order sudah punya address  → pakai itu
+                                                    $order->address_id === $addr->id
+                                                    // ② jika belum  → pilih yang is_default
+                                                    || ($order->address_id === null && $addr->is_default)
+                                                )
+                                            >
+                                                {{ $addr->recipient_name }} – {{ $addr->address }} ({{ $addr->postal_code }})
+                                                @if($addr->is_default)  • Default @endif
                                             </option>
                                         @endforeach
                                     </select>
@@ -378,6 +385,8 @@
       </button>
     </form>
   </div>
+
+
 </section>
 
 @elseif($order->status === 'completed' && $existingReview)
@@ -450,7 +459,22 @@ document.addEventListener('click', function (e) {
                     </form>
                 </div>
             @endif
-
+                {{-- ====== Mark as received ====== --}}
+                @if(($order->shipping->status ?? null) === 'dikirim' && $order->status !== 'completed')
+                    <div class="mt-8">
+                        <form  method="POST"
+                            action="{{ route('order.receive', $order->id) }}"
+                            onsubmit="return confirm('Pesanan sudah Anda terima dan sesuai? Tindakan ini akan menandai order selesai.');">
+                            @csrf
+                            @method('PUT')
+                            <button type="submit"
+                                    class="w-full bg-green-600 hover:bg-green-700 text-white
+                                        font-semibold py-3 px-4 rounded-md transition-colors shadow-md">
+                                Pesanan Diterima
+                            </button>
+                        </form>
+                    </div>
+                @endif
             <div class="mt-8 text-center">
                 <a href="{{ route('order.index') }}"
                    class="inline-block w-full md:w-auto text-center rounded-md bg-gray-300 px-6 py-3 text-gray-900 font-semibold hover:bg-gray-400 transition-colors shadow-sm">

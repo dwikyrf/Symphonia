@@ -89,15 +89,6 @@
                                 </select>
                                 @error('role')<span class="text-red-500 text-xs">{{ $message }}</span>@enderror
                             </div>
-
-                            <!-- Terms -->
-                            <div class="flex items-start">
-                                <input id="terms" type="checkbox" name="terms" class="checkbox-style" required>
-                                <label for="terms" class="ml-2 text-sm text-gray-500">
-                                    I accept the <a href="#" class="text-blue-600 hover:underline">Terms</a>
-                                </label>
-                            </div>
-
                             <button type="submit" class="btn-primary">Register</button>
                             <p class="text-sm text-gray-500">
                                 Already have an account?

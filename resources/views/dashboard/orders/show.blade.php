@@ -20,7 +20,7 @@
                         Status:
                         <span class="ml-2 px-2 py-1 text-sm rounded-lg font-medium
                             @if($order->status === 'processing')    bg-yellow-500 text-white
-                            @elseif($order->status === 'distribution') bg-purple-500 text-white
+                            @elseif($order->status === 'pending') bg-purple-500 text-white
                             @elseif($order->status === 'completed')   bg-green-600 text-white
                             @elseif($order->status === 'cancelled')   bg-gray-500 text-white
                             @endif">
@@ -110,59 +110,55 @@
             @endif
 
             {{-- ==================== BUKTI TRANSFER ==================== --}}
-            @if($transaction)
-            <div class="mt-6 bg-white shadow-md rounded-lg p-6">
+                @php($trx = $order->transaction)          {{-- cache singkat --}}
+
+                <div class="mt-6 bg-white shadow-md rounded-lg p-6">
                 <h4 class="text-lg font-bold text-gray-900 mb-4">Bukti Pembayaran</h4>
-                <div class="space-y-4">
-                    @if($transaction->transfer_proof_dp)
-                        <div>
-                            <p class="text-gray-700 font-medium mb-1">Bukti Transfer DP:</p>
-                            <img src="{{ route('order.file', [$order->id,'transfer_proof_dp']) }}"
-                                 alt="DP proof" class="h-40 rounded border">
-                            <p>Status: {{ $transaction->is_verified_dp ? '✔ Terverifikasi' : '❌ Belum' }}</p>
-                        </div>
+
+                @if($trx?->transfer_proof_dp || $trx?->transfer_proof_full)
+                    {{-- DP --}}
+                    @if($trx->transfer_proof_dp)
+                        <p class="text-gray-700 font-medium mb-1">Bukti Transfer DP:</p>
+                        <img src="{{ route('order.file', [$order->id,'transfer_proof_dp']) }}"
+                            class="h-40 rounded border">
+                        <p>Status: {{ $trx->is_verified_dp ? '✔ Terverifikasi' : '❌ Belum' }}</p>
                     @endif
-                    @if($transaction->transfer_proof_full)
-                        <div>
-                            <p class="text-gray-700 font-medium mb-1">Bukti Transfer Pelunasan:</p>
-                            <img src="{{ route('order.file', [$order->id,'transfer_proof_full']) }}"
-                                 alt="Full proof" class="h-40 rounded border">
-                            <p>Status: {{ $transaction->is_verified_full ? '✔ Terverifikasi' : '❌ Belum' }}</p>
-                        </div>
+
+                    {{-- Pelunasan --}}
+                    @if($trx->transfer_proof_full)
+                        <p class="mt-4 text-gray-700 font-medium mb-1">Bukti Transfer Pelunasan:</p>
+                        <img src="{{ route('order.file', [$order->id,'transfer_proof_full']) }}"
+                            class="h-40 rounded border">
+                        <p>Status: {{ $trx->is_verified_full ? '✔ Terverifikasi' : '❌ Belum' }}</p>
                     @endif
+                @else
+                    <p class="text-sm text-gray-500">Belum ada bukti pembayaran yang di-upload.</p>
+                @endif
                 </div>
-            </div>
-            @endif
-        <div></div>
-            {{-- ==================== RINGKASAN & STATUS ==================== --}}
+
+                        {{-- ==================== RINGKASAN & STATUS ==================== --}}
             <div class="mt-6 bg-white shadow-md rounded-lg p-6 space-y-6">
-                <h4 class="text-lg font-semibold text-gray-900">Ringkasan Biaya</h4>
-                <div class="space-y-2 text-base">
-                    <div class="flex justify-between text-gray-700">
-                        <span>Subtotal</span>
-                        <span>Rp {{ number_format($order->price,0,',','.') }}</span>
-                    </div>
-                    <div class="flex justify-between text-gray-700">
-                        <span>Shipping</span>
-                        <span>Rp {{ number_format(optional($order->shipping)->shipping_cost ?? 0,0,',','.') }}</span>
-                    </div>
-                    <div class="flex justify-between border-t pt-2 text-lg font-bold text-gray-900">
-                        <span>Total</span>
-                        <span>
-                            Rp {{ number_format($order->total_price + (optional($order->shipping)->cost ?? 0),0,',','.') }}
-                        </span>
-                    </div>
-                </div>
-
-                {{-- Update Status --}}
+                …
                 <div class="flex flex-col sm:flex-row sm:justify-between gap-4">
-                    <a href="{{ route('dashboard.order.index') }}"
-                       class="w-full sm:w-auto text-center rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100">
-                        Kembali ke Daftar Order
-                    </a>
+                    {{-- ⬇️ Kumpulan tombol kiri --}}
+                    <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                        <a href="{{ route('dashboard.order.index') }}"
+                        class="flex-1 sm:flex-none text-center rounded-lg border border-gray-300 bg-white
+                                px-5 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100">
+                            Kembali ke Daftar
+                        </a>
 
+                        {{-- === Tombol Download PDF === --}}
+                        <a href="{{ route('dashboard.order.pdf', $order->id) }}"
+                        class="flex-1 sm:flex-none text-center rounded-lg bg-primary-600 hover:bg-primary-700
+                                px-5 py-2.5 text-sm font-medium text-white">
+                            Download PDF
+                        </a>
+                    </div>
+
+                    {{-- Form update status --}}
                     <form method="POST" action="{{ route('dashboard.order.update-status', $order->id) }}"
-                          class="w-full sm:w-auto">
+                        class="w-full sm:w-auto">
                         @csrf
                         <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Update Status</label>
                         <div class="flex gap-2 items-center">

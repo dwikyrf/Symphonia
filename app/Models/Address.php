@@ -36,8 +36,19 @@ class Address extends Model
         return $this->hasMany(Order::class);
     }
 
-    public function fullAddress(): string
+    // public function fullAddress(): string
+    // {
+    //     return trim("{$this->address}, {$this->village}, {$this->district}, {$this->city}, {$this->province}, {$this->postal_code}", ', ');
+    // }
+public function fullAddress(): string
     {
-        return trim("{$this->address}, {$this->village}, {$this->district}, {$this->city}, {$this->province}, {$this->postal_code}", ', ');
+        return collect([
+            $this->address,              // Jl. Gempol Asri Raya No. 31, Perum Gempol Asri
+            $this->village_name,         // Kelurahan
+            $this->district_name,        // Kecamatan
+            $this->city_name,            // Kota / Kab.
+            $this->province_name,        // Provinsi
+            $this->postal_code           // 40215
+        ])->filter()->implode(', ');
     }
 }

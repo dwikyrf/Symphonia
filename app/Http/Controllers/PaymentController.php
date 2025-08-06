@@ -488,7 +488,7 @@ private function jsonOrBack(string $msg, int $status, bool $json, array $extra =
         /* ---------------- Order: biarkan tetap partial ------------- */
         $order->update([
             // saldo tetap apa adanya sampai diverifikasi admin
-            'payment_status' => 'partial_full',          // akan menjadi 'paid' saat verifikasi
+            'payment_status' => 'partial',          // akan menjadi 'paid' saat verifikasi
         ]);
 
         Log::debug('[PAYOFF] Upload full', [

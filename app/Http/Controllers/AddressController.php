@@ -175,34 +175,75 @@ class AddressController extends Controller
     }
     // AddressController.php
 
+public function getKomercePostal(Request $request)
+{
+    /* ───── Ambil nama kecamatan & desa dari query ───── */
+    $district = trim($request->query('district'));   // kecamatan
+    $village  = trim($request->query('village'));    // kelurahan/desa
 
-    public function getKomercePostal(Request $request)
-    {
-        $keyword = $request->query('village');
-
-        if (!$keyword) {
-            return response()->json(['message' => 'Keyword kelurahan tidak valid'], 400);
-        }
-
-        try {
-            $response = Http::withHeaders([
-                'x-api-key' => env('KOMERCE_API_KEY') // ✅ Ubah ini
-            ])->get('https://api-sandbox.collaborator.komerce.id/tariff/api/v1/destination/search', [
-                'keyword' => $keyword
-            ]);
-
-            if ($response->successful()) {
-                return response()->json(['data' => $response->json('data') ?? []]);
-            }
-
-            return response()->json(['message' => 'Gagal ambil data dari Komerce'], $response->status());
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Terjadi kesalahan server: ' . $e->getMessage()
-            ], 500);
-        }
+    if (!$district && !$village) {
+        return response()->json(['message' => 'Parameter district / village kosong'], 400);
     }
+
+    // helper anonim untuk mem‐anggil API sekali
+    $search = function (string $keyword) {
+        return Http::withHeaders([
+                'x-api-key' => env('KOMERCE_API_KEY')
+            ])->get(
+                'https://api-sandbox.collaborator.komerce.id/tariff/api/v1/destination/search',
+                ['keyword' => $keyword]
+            );
+    };
+
+    /* ───── 1) coba desa + kecamatan ───── */
+    $keyword1 = trim("$village $district");          // “Kapalo Koto Pauh”
+    $response = $search($keyword1);
+
+    $data = $response->successful()
+            ? ($response->json('data') ?? [])
+            : [];
+
+    /* ───── 2) fallback: hanya kecamatan ───── */
+    if (empty($data) && $district) {
+        $response = $search($district);              // “Pauh”
+        $data = $response->successful()
+                ? ($response->json('data') ?? [])
+                : [];
+    }
+
+    /* ───── hasil ───── */
+    return response()->json([
+        'data'    => $data,
+        'keyword' => empty($data) ? $district : $keyword1, // info debugging
+    ]);
+}
+    // public function getKomercePostal(Request $request)
+    // {
+    //     $keyword = $request->query('village');
+
+    //     if (!$keyword) {
+    //         return response()->json(['message' => 'Keyword kelurahan tidak valid'], 400);
+    //     }
+
+    //     try {
+    //         $response = Http::withHeaders([
+    //             'x-api-key' => env('KOMERCE_API_KEY') // ✅ Ubah ini
+    //         ])->get('https://api-sandbox.collaborator.komerce.id/tariff/api/v1/destination/search', [
+    //             'keyword' => $keyword
+    //         ]);
+
+    //         if ($response->successful()) {
+    //             return response()->json(['data' => $response->json('data') ?? []]);
+    //         }
+
+    //         return response()->json(['message' => 'Gagal ambil data dari Komerce'], $response->status());
+
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'message' => 'Terjadi kesalahan server: ' . $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
 
 
 }

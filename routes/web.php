@@ -118,7 +118,7 @@ Route::middleware(['auth','verified'])
 
     Route::post('/update-shipping-details',   [OrderController::class,'updateShippingDetails'])->name('updateShippingDetails');
     Route::post('/{order}/upload-details',    [OrderController::class,'uploadDetails'])->name('uploadDetails');
-
+    Route::put('/{order}/receive',            [OrderController::class, 'markAsReceived'])->name('receive');
     /* Review endpoint kedua (seperti semula) */
     Route::post('/{order}/reviews', [ReviewController::class,'store']) ->name('reviews.store');   // ← hanya menambah {order}
     Route::get('/order-file/{order}/{type}',   // type = design | logo
@@ -203,7 +203,7 @@ Route::prefix('dashboard')->middleware(['auth', AdminMiddleware::class])->name('
     Route::get ('/orders/{order}/export-invoice', [DashboardOrderController::class,'exportInvoice'])->name('order.export-invoice');
     Route::post('/orders/bulk-delete',     [DashboardOrderController::class,'bulkDelete'])->name('order.bulk-delete');
     Route::get ('/exports',                [DashboardOrderController::class,'exportsExcel'])->name('order.exports');
-
+    Route::get('/dashboard/order/{order}/pdf',[DashboardOrderController::class, 'downloadPdf'])->name('order.pdf');
     /* SALES */
     Route::get ('/sales',               [SalesReportController::class,'index'     ])->name('sales.index');
     Route::get ('/sales/export-pdf',    [SalesReportController::class,'exportPdf' ])->name('sales.export-pdf');
