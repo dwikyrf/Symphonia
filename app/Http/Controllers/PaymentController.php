@@ -88,7 +88,7 @@ class PaymentController extends Controller
         /* ───────────── 3. DB TRANSACTION ───────────── */
         return DB::transaction(function () use ($stage, $order, $pay, $path, $expectsJson) {
 
-            $grandTotal = $order->total_price + ($order->shipping->shipping_cost ?? 0);
+            $grandTotal = $order->total_price ;
 
             /* ---------------   DP   --------------- */
             if ($stage === 'dp') {

@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
         style: 'currency', currency: 'IDR', minimumFractionDigits: 0
     });
 
-    /* --- Hitung nominal: DP = 25 % dari (subtotal + ongkir) --- */
+    /* --- Hitung nominal: DP = 40 % dari (subtotal + ongkir) --- */
     const grandTotal = totalPrice + shippingCost;
     const nominal = payType === 'dp'
         ? Math.floor(grandTotal * 0.40)      // dibulatkan ke BAWAH

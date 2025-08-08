@@ -470,7 +470,7 @@ document.addEventListener('click', function (e) {
                 </div>
             @endif
                 {{-- ====== Mark as received ====== --}}
-                @if(($order->shipping->status ?? null) === 'dikirim' && $order->status !== 'completed')
+                @if(($order->shipping?->status === 'dikirim')  && !in_array($order->status, ['completed','cancelled'], true))
                     <div class="mt-8">
                         <form  method="POST"
                             action="{{ route('order.receive', $order->id) }}"
