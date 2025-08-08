@@ -105,10 +105,6 @@
 
                             {{-- Ingat Saya & Lupa Password --}}
                             <div class="flex items-center justify-between">
-                                <label for="remember_me" class="flex items-center space-x-2 text-sm text-gray-600">
-                                    <input id="remember_me" type="checkbox" name="remember" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
-                                    <span>Ingat saya</span>
-                                </label>
                                 @if (Route::has('password.request'))
                                     <a href="{{ route('password.request') }}" class="text-sm font-medium text-primary-600 hover:underline">Lupa password?</a>
                                 @endif

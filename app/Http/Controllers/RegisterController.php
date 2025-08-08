@@ -35,7 +35,6 @@ class RegisterController extends Controller
                 'regex:/[@$!%*?&]/'    // setidaknya 1 simbol
             ],
             'role' => 'required|in:user,corporate,admin',
-            'terms' => 'accepted',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);

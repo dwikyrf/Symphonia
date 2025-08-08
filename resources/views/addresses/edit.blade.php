@@ -215,6 +215,7 @@
         
         // ** INI BAGIAN YANG DIPERBAIKI **
             villageEl.addEventListener("change", () => {
+                 villageNameInput.value = villageEl.options[villageEl.selectedIndex]?.text;
         const kelurahan = villageEl.options[villageEl.selectedIndex]?.text;
         const kecamatan = districtEl.options[districtEl.selectedIndex]?.text;
         const kota = cityEl.options[cityEl.selectedIndex]?.text;

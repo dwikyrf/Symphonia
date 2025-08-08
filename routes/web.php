@@ -31,6 +31,7 @@ use App\Http\Controllers\Admin\DashboardPostController;
 use App\Http\Controllers\Admin\OrderTrackingController;
 use App\Http\Controllers\Admin\DashboardOrderController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Admin\DashboardProductController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Admin\DashboardCategoryController;
@@ -49,10 +50,12 @@ Route::view('/account',      'account'     )->name('account');
 /* -----------------------------------------------------------
  | PASSWORD RESET
  ----------------------------------------------------------- */
+ Route::middleware(['auth','verified'])->group(function () {
 Route::get ('/forgot-password',       [PasswordResetLinkController::class, 'create'])->name('password.request');
 Route::post('/forgot-password',       [PasswordResetLinkController::class, 'store' ])->name('password.email');
 Route::get ('/reset-password/{token}',[NewPasswordController::class,      'create'])->name('password.reset');
-Route::post('/reset-password',        [NewPasswordController::class,      'store' ])->name('password.update');
+Route::put('/reset-password',        [PasswordController::class,      'update' ])->name('password.update');
+});
 
 /* -----------------------------------------------------------
  | PRODUCTS & CATEGORIES (PUBLIC)
@@ -168,9 +171,9 @@ Route::middleware(['auth','verified'])->group(function () {
     Route::get ('/profile',                [ProfileController::class,'index'        ])->name('profile.index');
     Route::get ('/profile/edit',           [ProfileController::class,'edit'         ])->name('profile.edit');
     Route::post('/profile/update',         [ProfileController::class,'update'       ])->name('profile.update');
-    Route::get ('/profile/change-password',[ProfileController::class,'changePassword'])->name('profile.change-password');
-    Route::post('/profile/update-password',[ProfileController::class,'updatePassword'])->name('profile.update-password');
-    Route::post('/profile/destroy',        [ProfileController::class,'destroy'      ])->name('profile.destroy');
+    // Route::get ('/profile/change-password',[ProfileController::class,'changePassword'])->name('profile.change-password');
+    // Route::post('/profile/update-password',[ProfileController::class,'updatePassword'])->name('profile.update-password');
+    Route::delete('/profile/destroy',        [ProfileController::class,'destroy'      ])->name('profile.destroy');
 });
 
 /* -----------------------------------------------------------
@@ -231,5 +234,4 @@ Route::prefix('dashboard')->middleware(['auth', AdminMiddleware::class])->name('
         [\App\Http\Controllers\TransferProofController::class, 'show'])
     ->middleware(['auth','verified'])
     ->name('transfer-proof.show');
-
 });

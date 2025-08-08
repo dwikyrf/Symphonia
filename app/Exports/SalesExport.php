@@ -21,14 +21,18 @@ class SalesExport implements FromCollection, WithMapping, WithHeadings
 }
 
     public function collection()
-{
-    return Order::query()
-        ->when($this->start, fn($q) => $q->whereDate('created_at', '>=', $this->start))
-        ->when($this->end, fn($q) => $q->whereDate('created_at', '<=', $this->end))
-        ->when($this->status !== 'all', fn($q) => $q->where('status', $this->status))
-        ->select('order_number', 'created_at', 'total_price', 'status')
-        ->get();
-}
+    {
+        return Order::query()
+            ->when($this->start, fn ($q) => $q->whereDate('created_at', '>=', $this->start))
+            ->when($this->end,   fn ($q) => $q->whereDate('created_at', '<=', $this->end))
+            ->when(
+                filled($this->status) && $this->status !== 'all',   // ⬅️   kunci
+                fn ($q) => $q->where('status', $this->status)
+            )
+            ->select('order_number', 'created_at', 'total_price', 'status')
+            ->get();
+    }
+
 
 
     public function map($order): array

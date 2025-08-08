@@ -99,9 +99,7 @@ class DashboardProductController extends Controller
 
     public function show(Product $product)
     {
-        return view('dashboard.products.show', [
-            'product' =>  $product->slug
-        ]);
+          return view('dashboard.products.show', compact('product'));
     }
 
 

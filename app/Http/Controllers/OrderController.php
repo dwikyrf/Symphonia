@@ -25,11 +25,18 @@ class OrderController extends Controller
     }
     public function markAsReceived(Order $order)
     {
-        if ($order->shipping?->status === 'dikirim') {
-            $order->status = 'completed';
-            $order->save();
-        }
-        return back()->with('success','Pesanan ditandai selesai.');
+         if ($order->shipping && $order->shipping->status === 'dikirim') {
+        DB::transaction(function () use ($order) {
+            $order->update(['status' => 'completed']);
+            $order->shipping->update(['status' => 'diterima']);   // ⬅️ update shipping
+            // kalau ada kolom timestamp, boleh isi juga:
+            // $order->shipping->update(['status' => 'diterima', 'received_at' => now()]);
+        });
+
+        return back()->with('success', 'Pesanan ditandai selesai & pengiriman diterima.');
+    }
+
+    return back()->with('info', 'Pesanan belum berstatus "dikirim" atau data pengiriman tidak ada.');
     }
     public function show(Order $order)
     {
@@ -340,9 +347,12 @@ class OrderController extends Controller
         });
 
         /* -------- 3. Redirect -------- */
+        // return redirect()
+        //     ->route('payment.show', $order)
+        //     ->with('success', 'Jenis pembayaran & pengiriman berhasil disimpan.');
         return redirect()
-            ->route('payment.show', $order)
-            ->with('success', 'Jenis pembayaran & pengiriman berhasil disimpan.');
+        ->route(strtolower($order->user->role) === 'corporate' ? 'payment.complete' : 'payment.show', $order)
+        ->with('success', 'Jenis pembayaran & pengiriman berhasil disimpan.');
     }
     public function uploadDetails(Request $request, Order $order)
     {

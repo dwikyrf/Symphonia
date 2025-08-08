@@ -36,8 +36,8 @@ class AddressController extends Controller
             'city_code'        => 'required|string|max:20', // Kode Kota/Kabupaten
             'district'         => 'required|string|max:100', // Nama Kecamatan
             'district_code'    => 'required|string|max:20', // Kode Kecamatan
-            // 'village'          => 'nullable|string|max:100', // Opsional jika Anda punya input kelurahan/desa
-            // 'village_code'     => 'nullable|string|max:20', // Opsional
+            'village'          => 'nullable|string|max:100', // Opsional jika Anda punya input kelurahan/desa
+            'village_code'     => 'nullable|string|max:20', // Opsional
             'postal_code'      => 'required|string|max:10',
             'destination_id'   => 'required|string|max:20', // destination_id akan menjadi district_code
             'is_default'       => 'boolean', // Ini akan otomatis handle jika checkbox ada/tidak
@@ -67,8 +67,8 @@ class AddressController extends Controller
             'city_code'        => $request->city_code,
             'district'         => $request->district,
             'district_code'    => $request->district_code,
-            // 'village'          => $request->village, // Tambahkan jika ada input
-            // 'village_code'     => $request->village_code, // Tambahkan jika ada input
+            'village'          => $request->village, // Tambahkan jika ada input
+            'village_code'     => $request->village_code, // Tambahkan jika ada input
             'postal_code'      => $request->postal_code,
             'destination_id'   => $request->destination_id, // Menggunakan district_code sebagai destination_id
             'is_default'       => $request->has('is_default'),
@@ -102,8 +102,8 @@ class AddressController extends Controller
             'city_code'        => 'required|string|max:20',
             'district'         => 'required|string|max:100',
             'district_code'    => 'required|string|max:20',
-            // 'village'          => 'nullable|string|max:100', // Opsional
-            // 'village_code'     => 'nullable|string|max:20', // Opsional
+            'village'          => 'nullable|string|max:100', // Opsional
+            'village_code'     => 'nullable|string|max:20', // Opsional
             'postal_code'      => 'required|string|max:10',
             'destination_id'   => 'required|string|max:20', // destination_id akan menjadi district_code
             'is_default'       => 'boolean',
@@ -130,8 +130,8 @@ class AddressController extends Controller
             'city_code'        => $request->city_code,
             'district'         => $request->district,
             'district_code'    => $request->district_code,
-            // 'village'          => $request->village, // Tambahkan jika ada input
-            // 'village_code'     => $request->village_code, // Tambahkan jika ada input
+            'village'          => $request->village, // Tambahkan jika ada input
+            'village_code'     => $request->village_code, // Tambahkan jika ada input
             'postal_code'      => $request->postal_code,
             'destination_id'   => $request->destination_id,
             'is_default'       => $request->has('is_default'),
@@ -140,9 +140,6 @@ class AddressController extends Controller
         return redirect()->route('addresses.index')->with('success', 'Alamat berhasil diperbarui.');
     }
 
-
-
-    // 📌 Hapus Alamat
     public function destroy(Address $address)
     {
         $this->authorizeAddress($address);
@@ -155,8 +152,6 @@ class AddressController extends Controller
         return redirect()->route('addresses.index')->with('success', 'Alamat berhasil dihapus.');
     }
 
-    // 📌 Mengatur Alamat Default
-     // Mengatur Alamat Default
     public function setDefault(Address $address)
     {
         $this->authorizeAddress($address);
@@ -173,77 +168,50 @@ class AddressController extends Controller
             abort(403, 'Unauthorized action.');
         }
     }
-    // AddressController.php
 
-public function getKomercePostal(Request $request)
-{
-    /* ───── Ambil nama kecamatan & desa dari query ───── */
-    $district = trim($request->query('district'));   // kecamatan
-    $village  = trim($request->query('village'));    // kelurahan/desa
 
-    if (!$district && !$village) {
-        return response()->json(['message' => 'Parameter district / village kosong'], 400);
-    }
+    public function getKomercePostal(Request $request)
+    {
+        /* ───── Ambil nama kecamatan & desa dari query ───── */
+        $district = trim($request->query('district'));   // kecamatan
+        $village  = trim($request->query('village'));    // kelurahan/desa
 
-    // helper anonim untuk mem‐anggil API sekali
-    $search = function (string $keyword) {
-        return Http::withHeaders([
-                'x-api-key' => env('KOMERCE_API_KEY')
-            ])->get(
-                'https://api-sandbox.collaborator.komerce.id/tariff/api/v1/destination/search',
-                ['keyword' => $keyword]
-            );
-    };
+        if (!$district && !$village) {
+            return response()->json(['message' => 'Parameter district / village kosong'], 400);
+        }
 
-    /* ───── 1) coba desa + kecamatan ───── */
-    $keyword1 = trim("$village $district");          // “Kapalo Koto Pauh”
-    $response = $search($keyword1);
+        // helper anonim untuk mem‐anggil API sekali
+        $search = function (string $keyword) {
+            return Http::withHeaders([
+                    'x-api-key' => env('KOMERCE_API_KEY')
+                ])->get(
+                    'https://api-sandbox.collaborator.komerce.id/tariff/api/v1/destination/search',
+                    ['keyword' => $keyword]
+                );
+        };
 
-    $data = $response->successful()
-            ? ($response->json('data') ?? [])
-            : [];
+        /* ───── 1) coba desa + kecamatan ───── */
+        $keyword1 = trim("$village $district");          // “Kapalo Koto Pauh”
+        $response = $search($keyword1);
 
-    /* ───── 2) fallback: hanya kecamatan ───── */
-    if (empty($data) && $district) {
-        $response = $search($district);              // “Pauh”
         $data = $response->successful()
                 ? ($response->json('data') ?? [])
                 : [];
+
+        /* ───── 2) fallback: hanya kecamatan ───── */
+        if (empty($data) && $district) {
+            $response = $search($district);              // “Pauh”
+            $data = $response->successful()
+                    ? ($response->json('data') ?? [])
+                    : [];
+        }
+
+        /* ───── hasil ───── */
+        return response()->json([
+            'data'    => $data,
+            'keyword' => empty($data) ? $district : $keyword1, // info debugging
+        ]);
     }
-
-    /* ───── hasil ───── */
-    return response()->json([
-        'data'    => $data,
-        'keyword' => empty($data) ? $district : $keyword1, // info debugging
-    ]);
-}
-    // public function getKomercePostal(Request $request)
-    // {
-    //     $keyword = $request->query('village');
-
-    //     if (!$keyword) {
-    //         return response()->json(['message' => 'Keyword kelurahan tidak valid'], 400);
-    //     }
-
-    //     try {
-    //         $response = Http::withHeaders([
-    //             'x-api-key' => env('KOMERCE_API_KEY') // ✅ Ubah ini
-    //         ])->get('https://api-sandbox.collaborator.komerce.id/tariff/api/v1/destination/search', [
-    //             'keyword' => $keyword
-    //         ]);
-
-    //         if ($response->successful()) {
-    //             return response()->json(['data' => $response->json('data') ?? []]);
-    //         }
-
-    //         return response()->json(['message' => 'Gagal ambil data dari Komerce'], $response->status());
-
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'message' => 'Terjadi kesalahan server: ' . $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
-
+    
 
 }

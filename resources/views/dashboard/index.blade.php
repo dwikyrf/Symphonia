@@ -218,7 +218,7 @@ new Chart(document.getElementById('productChart'), {
         }
     }
 });
-
+console.log(provinceLabels, provinceCounts);
 // 📌 Revenue by Product Category
 const categoryLabels = {!! json_encode(array_keys($revenueByCategory)) !!};
 const categoryRevenue = {!! json_encode(array_values($revenueByCategory)) !!};

@@ -43,23 +43,45 @@
                                         </thead>
                                         <tbody>
                                             @foreach ($items as $cartItem)
-                                                <tr>
-                                                    <td class="border border-gray-300 px-2 py-1 text-gray-900">{{ $cartItem->size }}</td>
-                                                    <td class="border border-gray-300 px-2 py-1 text-gray-900 text-center">
-                                                        <form action="{{ route('cart.update', $cartItem->id) }}" method="POST" class="flex items-center">
-                                                            @csrf
-                                                            <input type="number" name="quantity" value="{{ $cartItem->quantity }}" min="1" class="w-20 text-center border border-gray-300 rounded-lg text-sm mr-2" />
-                                                            <button type="submit" class="bg-blue-600 text-white px-2 py-1 rounded-lg hover:bg-blue-700 text-xs">Update</button>
-                                                        </form>
-                                                    </td>
-                                                    <td class="border border-gray-300 px-2 py-1 text-center">
-                                                        <form action="{{ route('cart.remove', $cartItem->id) }}" method="POST" class="inline-block">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit" class="bg-red-600 text-white px-2 py-1 rounded-lg hover:bg-red-700 text-xs">Remove</button>
-                                                        </form>
-                                                    </td>
-                                                </tr>
+                                            <tr
+                                                x-data="{ original: {{ $cartItem->quantity }}, current: {{ $cartItem->quantity }} }"
+                                                x-init="$watch('current', val => $refs.btn.disabled = (val == original))"
+                                            >
+                                                <td class="border px-2 py-1">{{ $cartItem->size }}</td>
+
+                                                <!-- Qty -->
+                                                <td class="border px-2 py-1 text-center">
+                                                    <form action="{{ route('cart.update', $cartItem->id) }}" method="POST" class="flex items-center">
+                                                        @csrf
+                                                        <input type="number"
+                                                            name="quantity"
+                                                            x-model.number="current"
+                                                            min="1"
+                                                            class="w-20 text-center border rounded-lg text-sm mr-2" />
+                                                        <button
+                                                            x-ref="btn"
+                                                            :disabled="true"                 
+                                                            type="submit"
+                                                            class="bg-blue-600 text-white px-2 py-1 rounded-lg text-xs
+                                                                disabled:opacity-50 disabled:cursor-not-allowed
+                                                                hover:bg-blue-700">
+                                                            Update
+                                                        </button>
+                                                    </form>
+                                                </td>
+
+                                                <!-- Remove -->
+                                                <td class="border px-2 py-1 text-center">
+                                                    <form action="{{ route('cart.remove', $cartItem->id) }}" method="POST" class="inline-block">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit"
+                                                                class="bg-red-600 text-white px-2 py-1 rounded-lg hover:bg-red-700 text-xs">
+                                                            Remove
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
                                             @endforeach
                                         </tbody>
                                     </table>
@@ -69,7 +91,10 @@
                     </div>
                 @endif
             </div>
-
+            @php
+                $totalQty = $cartItems->sum('quantity');
+                $minQty   = 24;          // <- ubah kalau kebijakan berubah
+            @endphp
             <!-- Order Summary Section -->
             <div class="w-full lg:w-1/3 lg:sticky lg:top-20">
                 <div class="bg-white p-6 rounded-lg shadow-lg">

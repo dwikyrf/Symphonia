@@ -189,13 +189,23 @@
                             </form>
                         </div>
                     @else
-                        <div class="mt-6">
-                            <a href="{{ route('payment.show', $order->id) }}"
-                            class="inline-block w-full text-center bg-primary-600 hover:bg-primary-700
-                                    text-white font-semibold px-5 py-2.5 rounded-md transition-colors">
-                                Lanjut ke Pembayaran
-                            </a>
-                        </div>
+                        @if(auth()->user()->role === 'user')
+                                <div class="mt-6">
+                                    <a href="{{ route('payment.show', $order->id) }}"
+                                    class="inline-block w-full text-center bg-primary-600 hover:bg-primary-700
+                                             text-white font-semibold px-5 py-2.5 rounded-md transition-colors">
+                                        Lanjut ke Pembayaran
+                                    </a>
+                                </div>
+                        @elseif(auth()->user()->role === 'corporate')
+                                <div class="mt-6">
+                                    <a href="{{ route('payment.complete', $order->id) }}"
+                                    class="inline-block w-full text-center bg-primary-600 hover:bg-primary-700
+                                             text-white font-semibold px-5 py-2.5 rounded-md transition-colors">
+                                        Lanjut Mengirim PO
+                                    </a>
+                                </div>
+                        @endif
                     @endif
                 </div>
             @endif
@@ -213,8 +223,8 @@
             {{-- =====================  Desain & Logo  ===================== --}}
         <div>
             @if (
-                $order->selected_payment_type &&
-                $transaction &&
+                $order->selected_payment_type && 
+                $transaction && $order->status !== 'cancelled' &&
                 ($transaction->is_verified_dp || $transaction->is_verified_full)
             )
                 @php
@@ -226,7 +236,7 @@
                         Unggah Detail Desain & Logo
                     </h3>
 
-                    @if(!$hasDetails)
+                    @if(!$hasDetails )
                         {{-- =========== FORM (belum pernah isi) =========== --}}
                         <p class="text-gray-700 mb-4">
                             Mohon unggah desain, logo, dan deskripsi untuk pesanan ini.

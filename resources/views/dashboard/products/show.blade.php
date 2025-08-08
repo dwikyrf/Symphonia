@@ -8,7 +8,7 @@
                 <div class="shrink-0 max-w-md lg:max-w-lg mx-auto">
                     @if($product->image)
                         <img class="w-full object-cover rounded-lg border border-gray-300" 
-                             src="{{ asset('img/' . $product->image) }}" 
+                             src="{{ asset($product->image) }}" 
                              alt="{{ $product->name }}">
                     @else
                         <img class="w-full object-cover rounded-lg border border-gray-300" 

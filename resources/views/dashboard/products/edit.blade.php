@@ -44,7 +44,7 @@
                         <label for="image" class="block mb-2 text-sm font-medium text-gray-900">Product Image</label>
                         
                         @if($product->image)
-                            <img src="{{ asset('img/' . $product->image) }}" alt="Product Image" class="mb-3 w-48 rounded-lg border border-gray-300">
+                            <img src="{{ asset($product->image) }}" alt="Product Image" class="mb-3 w-48 rounded-lg border border-gray-300">
                         @else
                             <p class="text-gray-500">No image available</p>
                         @endif
