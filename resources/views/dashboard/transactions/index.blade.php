@@ -98,23 +98,7 @@
                             </button>
                         </form>
 
-                        {{-- ---------- Verifikasi ----------
-                        {{--@php
-                            $needsVerify = ($t->payment_stage === 'dp'   && !$t->is_verified_dp)
-                                        || ($t->payment_stage === 'full' && !$t->is_verified_full);
-                        @endphp
-
-                        @if($needsVerify)
-                            <form action="{{ route('dashboard.transactions.verify', $t) }}"
-                                  method="POST" class="inline">
-                                @csrf
-                                {{-- kirim persis sama dengan kolom payment_stage --}}
-                               {{-- <input type="hidden" name="stage" value="{{ $t->payment_stage }}">
-                                <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-xs">
-                                    Verifikasi
-                                </button>
-                            </form>
-                        @endif--}}
+                        
                     </td>
                 </tr>
             @endforeach

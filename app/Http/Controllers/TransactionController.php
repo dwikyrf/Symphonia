@@ -146,8 +146,6 @@ class TransactionController extends Controller
         ));
     }
 
-
-    // app/Http/Controllers/TransactionController.php
     public function verify(Request $request, Transaction $transaction)
     {
         /* 1. Hanya admin */

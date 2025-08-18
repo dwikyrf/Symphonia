@@ -76,7 +76,7 @@
     <div x-show="mobileOpen" class="lg:hidden bg-gray-50 border border-gray-200 rounded-lg p-4 mt-4">
       <ul class="space-y-3 text-sm text-gray-900">
         <li><a href="/" class="hover:text-blue-700">Home</a></li>
-        <li><a href="/products" class="hover:text-blue-700">Produk</a></li>
+        <li><a href="/product" class="hover:text-blue-700">Produk</a></li>
         <li><a href="/category" class="hover:text-blue-700">Kategori</a></li>
       </ul>
     </div>

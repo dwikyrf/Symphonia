@@ -17,29 +17,6 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->command->info('⚡️ Memulai proses seeding database...');
-
-        // Status dasar
-        Status::insert([
-            [
-                'name' => 'belum bayar',
-                'slug' => 'belum-bayar',
-                'color' => 'bg-red-200 text-red-800'
-            ],
-            [
-                'name' => 'sudah dp',
-                'slug' => 'sudah-dp',
-                'color' => 'bg-yellow-200 text-yellow-800'
-            ],
-            [
-                'name' => 'lunas',
-                'slug' => 'lunas',
-                'color' => 'bg-green-200 text-green-800'
-            ],
-        ]);
-
-        $this->command->info('✅ Status seeded.');
-
         // Buat admin dan user biasa
         User::factory()
             ->count(10)
@@ -54,8 +31,10 @@ class DatabaseSeeder extends Seeder
         $this->call([UserSeeder::class]);
 
         // Kategori dan produk
-        Category::factory(5)->create();
-        Product::factory(50)->create();
+        // Category::factory(5)->create();
+        $this->call([CategorySeeder::class]);
+        // Product::factory(10)->create();
+        $this->call([ProductSeeder::class]);
         $this->command->info('✅ Category & Product seeded.');
 
         $this->call([AddressSeeder::class]);

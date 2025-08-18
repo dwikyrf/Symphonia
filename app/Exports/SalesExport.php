@@ -19,7 +19,6 @@ class SalesExport implements FromCollection, WithMapping, WithHeadings
     $this->end = $end;
     $this->status = $status;
 }
-
     public function collection()
     {
         return Order::query()
@@ -32,9 +31,6 @@ class SalesExport implements FromCollection, WithMapping, WithHeadings
             ->select('order_number', 'created_at', 'total_price', 'status')
             ->get();
     }
-
-
-
     public function map($order): array
     {
         return [

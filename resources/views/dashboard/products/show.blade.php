@@ -17,7 +17,6 @@
                     @endif
                 </div>
 
-                <!-- Bagian Informasi Produk -->
                 <div class="mt-6 sm:mt-8 lg:mt-0">
                     <!-- Nama Produk -->
                     <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl">

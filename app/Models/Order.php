@@ -31,21 +31,16 @@ class Order extends Model
     'description',
     'price',
 ];
-    // public function getDpAmount(): int
-    // {
-    //     return Money::roundTo($this->total_price * 0.40);
-    // }
-public function getDpAmount(): int
-{
-    // hitung grand-total = harga barang + ongkir
-    $grandTotal = $this->price + ($this->shipping->shipping_cost ?? 0);
 
-    // 25 % dibulatkan ke bawah → sama dengan Math.floor() di JS
-    return intdiv($grandTotal * 25, 100);
-}
-    /**
-     * Perbarui saldo & status setelah pembayaran diterima.
-     */
+    public function getDpAmount(): int
+    {
+        // hitung grand-total = harga barang + ongkir
+        $grandTotal = $this->price + ($this->shipping->shipping_cost ?? 0);
+
+        // 25 % dibulatkan ke bawah → sama dengan Math.floor() di JS
+        return intdiv($grandTotal * 25, 100);
+    }
+
     public function applyPayment(int $paid, string $stage): void
     {
         $this->remaining_balance -= $paid;

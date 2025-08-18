@@ -7,7 +7,6 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CartController;
-use App\Http\Controllers\PostController;
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\OrderController;
@@ -22,16 +21,14 @@ use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\KomerceProxyController;
 use App\Http\Controllers\Admin\InvoiceController;
+use App\Http\Controllers\Auth\PasswordController;
+use App\Http\Controllers\TransferProofController;
 use App\Http\Controllers\Admin\ShippingController;
-use App\Http\Controllers\Admin\TrackingController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Admin\SalesReportController;
-use App\Http\Controllers\Admin\DashboardPostController;
-use App\Http\Controllers\Admin\OrderTrackingController;
 use App\Http\Controllers\Admin\DashboardOrderController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
-use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Admin\DashboardProductController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Admin\DashboardCategoryController;
@@ -41,21 +38,19 @@ use App\Http\Controllers\Admin\DashboardCategoryController;
  ----------------------------------------------------------- */
 Route::view('/',             'home'        )->name('home');
 Route::view('/about',        'about'       )->name('about');
-Route::view('/category',     'category'    )->name('category.static');
 Route::view('/contact',      'contact'     )->name('contact');
-Route::view('/confirm-order','orderconfirm')->name('order.confirm');
-Route::view('/account',      'account'     )->name('account');
 
 
 /* -----------------------------------------------------------
  | PASSWORD RESET
  ----------------------------------------------------------- */
- Route::middleware(['auth','verified'])->group(function () {
-Route::get ('/forgot-password',       [PasswordResetLinkController::class, 'create'])->name('password.request');
-Route::post('/forgot-password',       [PasswordResetLinkController::class, 'store' ])->name('password.email');
+//  Route::middleware(['auth','verified'])->group(function () {
 Route::get ('/reset-password/{token}',[NewPasswordController::class,      'create'])->name('password.reset');
 Route::put('/reset-password',        [PasswordController::class,      'update' ])->name('password.update');
-});
+// });
+Route::post('reset-password', [NewPasswordController::class, 'store'])->name('password.store');
+Route::get ('/forgot-password',       [PasswordResetLinkController::class, 'create'])->name('password.request');
+Route::post('/forgot-password',       [PasswordResetLinkController::class, 'store' ])->name('password.email');
 
 /* -----------------------------------------------------------
  | PRODUCTS & CATEGORIES (PUBLIC)
@@ -64,7 +59,6 @@ Route::get('/product',                [ProductController::class, 'index'])->name
 Route::get('/product/{product:slug}', [ProductController::class, 'show' ])->name('product.show');
 // Review (public endpoint – tetap seperti semula)
 Route::post('/product/{product}/review', [ReviewController::class, 'store'])->name('review.store');
-
 Route::get('/category',               [CategoryController::class,'index'])->name('category.index');
 Route::get('/category/{slug}',        [CategoryController::class,'show' ])->name('category.show');
 
@@ -225,13 +219,9 @@ Route::prefix('dashboard')->middleware(['auth', AdminMiddleware::class])->name('
     /* TRANSACTIONS */
     Route::resource('transactions', TransactionController::class);
     Route::post('transactions/{transaction}/verify', [TransactionController::class,'verify'])->name('transactions.verify');
-
-    /* ORDER TRACKING */
-    Route::resource('ordertrackings', OrderTrackingController::class)->except(['show']);
-    Route::resource('trackings',      TrackingController::class     )->except(['show']);
     
-    Route::get('/transfer-proof/{transaction}/{stage?}',   // stage: dp | full
-        [\App\Http\Controllers\TransferProofController::class, 'show'])
+    Route::get('/transfer-proof/{transaction}/{stage?}', [TransferProofController::class, 'show'])
     ->middleware(['auth','verified'])
     ->name('transfer-proof.show');
+require __DIR__.'/auth.php';
 });
